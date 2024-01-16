@@ -1,0 +1,189 @@
+<!--На странице user-details.html:-->
+<!--4 Вивести всю, без виключення, інформацію про об'єкт user на який клікнули-->
+<!--5 Додати кнопку "post of current user", при кліку на яку, з'являються title всіх постів поточного юзера-->
+<!--(для получения постов используйте эндпоинт https://jsonplaceholder.typicode.com/users/USER_ID/posts)-->
+<!--6 Каждому посту додати кнопку/посилання, при кліку на яку відбувається перехід на сторінку post-details.html, котра має детальну інфу про поточний пост.-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>User Details</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@200;300;400&display=swap');
+        *{
+            font-family: 'Josefin Sans', sans-serif;
+        }
+        body{
+            background-image: url("https://www.pixground.com/wp-content/uploads/2023/08/Japanese-Cherry-Blossom-Scenery-AI-Generated-4K-Wallpaper-1.jpg");
+            background-size: cover;
+        }
+        .text{
+            width: 80%;
+            margin: 7px 10px;
+            font-size: 20px;
+            background: #cb95cb;
+            border: 1px solid purple;
+            padding: 10px 10px 5px;
+        }
+        .info-box , #main-box{
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        #main-box{
+            border: 1px solid black;
+            width: max-content;
+            background: rgba(255, 244, 255, 0.1);
+        }
+        #main-box h1{
+            margin: 15px 0 8px;
+        }
+        .hide{
+            display: none;
+        }
+        .unhide{
+            display: block;
+        }
+        .titles-box{
+            margin: 15px 0;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        .title-box-small{
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-direction: column;
+            width: 19%;
+            box-sizing: border-box;
+            border: 1px solid black;
+            background: rgba(255, 244, 255, 0.1);
+        }
+        .all-wrap{
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .post-show-btn{
+            font-size: 20px;
+            margin: 15px 0;
+            width: 90%;
+            transition: all 0.5s ease;
+            background: #f5c8f5;
+            border: 1px solid #480101;
+            padding: 4px;
+        }
+        .post-show-btn:hover{
+            background: #fae9fa;
+            transition: all 0.5s ease;
+            color: purple;
+            border-radius: 10px;
+        }
+        .button-box{
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #more-post{
+            border-radius: 10px;
+            background: #f5c8f5;
+            border: 1px solid #480101;
+            margin: 5px 10px;
+            font-size: 20px;
+            transition: all 0.5s ease;
+        }
+        #more-post:hover{
+            background: #fae9fa;
+            transition: all 0.5s ease;
+            color: purple;
+        }
+
+    </style>
+</head>
+<body>
+
+<main class="all-wrap">
+    <div id="main-box">
+        <h1>Info about user</h1>
+
+    </div>
+</main>
+
+<script>
+    let id = new URL(location.href).searchParams.get('userId');
+    let infoBox = document.createElement('div');
+    infoBox.classList.add('info-box');
+    let mainBox = document.getElementById('main-box');
+    mainBox.append(infoBox);
+    async function fetcher(url){
+        const response = await fetch(url);
+        return await response.json();
+
+    }
+    async function info(url){
+        let userInfo = await fetcher(url)
+        async function infoSearcher(inform){
+            for (const item in inform) {
+                if (typeof inform[item] === 'object') {
+                    await infoSearcher(inform[item]);
+                } else {
+                     let p = document.createElement('p');
+                     p.classList.add('text')
+                     p.innerText = item.charAt(0).toUpperCase() + item.slice(1) + `: ` +inform[item];
+                     infoBox.append(p);
+                }
+            }
+        }
+        await infoSearcher(userInfo);
+    }
+    void info(`https://jsonplaceholder.typicode.com/users/${id}`);
+    async function buttonLogic(){
+        let btnBox = document.createElement('div');
+        btnBox.classList.add('button-box');
+        let btn = document.createElement('button');
+        btn.innerText = 'Post of current user';
+        btn.classList.add('post-show-btn')
+        document.body.append(btnBox);
+        btnBox.append(btn)
+        btn.onclick = async function (){
+            let titles = await fetcher(`https://jsonplaceholder.typicode.com/users/${id}/posts`)
+            btnBox.classList.remove('button-box');
+            btnBox.classList.add('hide');
+            let posts = document.createElement('div');
+            posts.classList.add('titles-box');
+            let i = 0;
+            for (const title of titles) {
+                let titleBox = document.createElement('div');
+                let postBtn = document.createElement('button');
+                postBtn.id = 'more-post'
+                postBtn.innerText=`More about post`;
+                titleBox.classList.add('title-box-small')
+                i++;
+                let p = document.createElement('p');
+                p.classList.add('text');
+                p.innerText = `Title №${i}: ` + title.title;
+                titleBox.append(p,postBtn);
+                posts.append(titleBox);
+
+                postBtn.onclick = async function(){
+                    location.href = `./post-details.html?postId=${title.id}&userId=${id}`;
+                }
+            }
+            document.body.append(posts);
+
+        };
+
+    }
+    void buttonLogic();
+
+
+    //user-details.html - блок з інфою про user зверху сторінки. Кнопка нижчє, на 90% ширини сторінки, по центру.
+    //блоки з короткою іфною про post - в ряд по 5
+</script>
+</body>
+</html>
